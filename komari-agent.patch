@@ -1,6 +1,6 @@
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/build_all.ps1 komari-all/komari-agent/build_all.ps1
---- code/komari-agent/build_all.ps1	2025-11-08 23:54:15
-+++ komari-all/komari-agent/build_all.ps1	2025-11-08 23:57:10
+--- code/komari-agent/build_all.ps1	2025-11-09 02:20:11
++++ komari-all/komari-agent/build_all.ps1	2025-11-09 02:23:14
 @@ -45,7 +45,7 @@
          $env:GOARCH = $goarch
          $env:CGO_ENABLED = '0'
@@ -11,8 +11,8 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
              Write-Host "Failed to build for $goos/$goarch" -ForegroundColor $Red
              $failedBuilds += "$goos/$goarch"
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/build_all.sh komari-all/komari-agent/build_all.sh
---- code/komari-agent/build_all.sh	2025-11-08 23:54:15
-+++ komari-all/komari-agent/build_all.sh	2025-11-08 23:57:10
+--- code/komari-agent/build_all.sh	2025-11-09 02:20:15
++++ komari-all/komari-agent/build_all.sh	2025-11-09 02:23:14
 @@ -37,7 +37,7 @@
      fi
  
@@ -24,7 +24,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
        echo -e "${RED}Failed to build for $GOOS/$GOARCH${NC}"
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/cmd/autodiscovery.go komari-all/komari-agent/cmd/autodiscovery.go
 --- code/komari-agent/cmd/autodiscovery.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/cmd/autodiscovery.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/cmd/autodiscovery.go	2025-11-09 02:08:00
 @@ -10,8 +10,9 @@
  	"net/url"
  	"os"
@@ -90,7 +90,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  	req, err := http.NewRequest("POST", registerURL, bytes.NewBuffer(jsonData))
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/cmd/flags/flag.go komari-all/komari-agent/cmd/flags/flag.go
 --- code/komari-agent/cmd/flags/flag.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/cmd/flags/flag.go	2025-11-08 23:55:06
++++ komari-all/komari-agent/cmd/flags/flag.go	2025-11-09 02:08:00
 @@ -26,6 +26,7 @@
  	CustomIpv6           string  `json:"custom_ipv6" env:"AGENT_CUSTOM_IPV6"`                         // 自定义 IPv6 地址
  	GetIpAddrFromNic     bool    `json:"get_ip_addr_from_nic" env:"AGENT_GET_IP_ADDR_FROM_NIC"`       // 从网卡获取IP地址
@@ -101,7 +101,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  var GlobalConfig = &Config{}
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/cmd/listDisk.go komari-all/komari-agent/cmd/listDisk.go
 --- code/komari-agent/cmd/listDisk.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/cmd/listDisk.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/cmd/listDisk.go	2025-11-09 02:08:00
 @@ -5,7 +5,7 @@
  	"log"
  	"text/tabwriter"
@@ -113,7 +113,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  )
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/cmd/root.go komari-all/komari-agent/cmd/root.go
 --- code/komari-agent/cmd/root.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/cmd/root.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/cmd/root.go	2025-11-09 02:08:00
 @@ -13,14 +13,14 @@
  	"strings"
  	"syscall"
@@ -145,7 +145,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/dnsresolver/resolver.go komari-all/komari-agent/dnsresolver/resolver.go
 --- code/komari-agent/dnsresolver/resolver.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/dnsresolver/resolver.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/dnsresolver/resolver.go	2025-11-09 02:08:00
 @@ -12,7 +12,7 @@
  	"sync"
  	"time"
@@ -157,44 +157,16 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  var flags = pkg_flags.GlobalConfig
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/go.mod komari-all/komari-agent/go.mod
 --- code/komari-agent/go.mod	2025-11-08 23:54:15
-+++ komari-all/komari-agent/go.mod	2025-11-08 23:57:10
++++ komari-all/komari-agent/go.mod	2025-11-09 02:23:14
 @@ -1,4 +1,4 @@
 -module github.com/komari-monitor/komari-agent
 +module github.com/hanxianzhai/komari-agent
  
  go 1.23.2
  
-diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/install.ps1 komari-all/komari-agent/install.ps1
---- code/komari-agent/install.ps1	2025-11-08 23:54:15
-+++ komari-all/komari-agent/install.ps1	2025-11-08 23:57:10
-@@ -228,7 +228,7 @@
- 
- # Construct download URL
- $BinaryName = "komari-agent-windows-$arch.exe"
--$DownloadUrl = if ($GitHubProxy) { "$GitHubProxy/https://github.com/komari-monitor/komari-agent/releases/download/$versionToInstall/$BinaryName" } else { "https://github.com/komari-monitor/komari-agent/releases/download/$versionToInstall/$BinaryName" }
-+$DownloadUrl = if ($GitHubProxy) { "$GitHubProxy/https://github.com/hanxianzhai/komari-agent/releases/download/$versionToInstall/$BinaryName" } else { "https://github.com/hanxianzhai/komari-agent/releases/download/$versionToInstall/$BinaryName" }
- 
- # Download and install
- New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/install.sh komari-all/komari-agent/install.sh
---- code/komari-agent/install.sh	2025-11-09 00:17:51
-+++ komari-all/komari-agent/install.sh	2025-11-09 00:17:20
-@@ -293,10 +293,10 @@
- 
- if [ -n "$github_proxy" ]; then
-     # Use proxy for GitHub releases
--    download_url="${github_proxy}/https://github.com/komari-monitor/komari-agent/releases/${download_path}/${file_name}"
-+    download_url="${github_proxy}/https://github.com/hanxianzhai/komari-agent/releases/${download_path}/${file_name}"
- else
-     # Direct access to GitHub releases
--    download_url="https://github.com/komari-monitor/komari-agent/releases/${download_path}/${file_name}"
-+    download_url="https://github.com/hanxianzhai/komari-agent/releases/${download_path}/${file_name}"
- fi
- 
- log_step "Creating installation directory: ${GREEN}$target_dir${NC}"
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/main.go komari-all/komari-agent/main.go
 --- code/komari-agent/main.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/main.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/main.go	2025-11-09 02:08:00
 @@ -3,7 +3,7 @@
  import (
  	"os"
@@ -206,7 +178,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  func main() {
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/monitoring/monitoring.go komari-all/komari-agent/monitoring/monitoring.go
 --- code/komari-agent/monitoring/monitoring.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/monitoring/monitoring.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/monitoring/monitoring.go	2025-11-09 02:08:00
 @@ -5,8 +5,8 @@
  	"fmt"
  	"log"
@@ -220,7 +192,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  var flags = pkg_flags.GlobalConfig
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/monitoring/unit/cpu.go komari-all/komari-agent/monitoring/unit/cpu.go
 --- code/komari-agent/monitoring/unit/cpu.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/monitoring/unit/cpu.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/monitoring/unit/cpu.go	2025-11-09 02:08:00
 @@ -8,7 +8,7 @@
  	"strings"
  	"time"
@@ -232,7 +204,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/monitoring/unit/ip.go komari-all/komari-agent/monitoring/unit/ip.go
 --- code/komari-agent/monitoring/unit/ip.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/monitoring/unit/ip.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/monitoring/unit/ip.go	2025-11-09 02:08:00
 @@ -9,7 +9,7 @@
  	"regexp"
  	"time"
@@ -298,7 +270,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  }
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/monitoring/unit/net.go komari-all/komari-agent/monitoring/unit/net.go
 --- code/komari-agent/monitoring/unit/net.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/monitoring/unit/net.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/monitoring/unit/net.go	2025-11-09 02:08:00
 @@ -5,8 +5,8 @@
  	"strings"
  	"time"
@@ -312,7 +284,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/server/basicInfo.go komari-all/komari-agent/server/basicInfo.go
 --- code/komari-agent/server/basicInfo.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/server/basicInfo.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/server/basicInfo.go	2025-11-09 02:08:00
 @@ -9,11 +9,11 @@
  	"strings"
  	"time"
@@ -348,7 +320,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  		"disk_total":     monitoring.Disk().Total,
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/server/task.go komari-all/komari-agent/server/task.go
 --- code/komari-agent/server/task.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/server/task.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/server/task.go	2025-11-09 02:08:00
 @@ -13,7 +13,7 @@
  	"strings"
  	"time"
@@ -360,7 +332,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/server/websocket.go komari-all/komari-agent/server/websocket.go
 --- code/komari-agent/server/websocket.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/server/websocket.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/server/websocket.go	2025-11-09 02:08:00
 @@ -10,11 +10,11 @@
  	"time"
  
@@ -380,7 +352,7 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  func EstablishWebSocketConnection() {
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/terminal/terminal.go komari-all/komari-agent/terminal/terminal.go
 --- code/komari-agent/terminal/terminal.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/terminal/terminal.go	2025-11-08 23:57:10
++++ komari-all/komari-agent/terminal/terminal.go	2025-11-09 02:08:00
 @@ -7,7 +7,7 @@
  
  	"github.com/gorilla/websocket"
@@ -392,8 +364,8 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  var flags = pkg_flags.GlobalConfig
 diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/update/update.go komari-all/komari-agent/update/update.go
 --- code/komari-agent/update/update.go	2025-11-08 23:54:15
-+++ komari-all/komari-agent/update/update.go	2025-11-08 23:57:10
-@@ -9,7 +9,7 @@
++++ komari-all/komari-agent/update/update.go	2025-11-09 02:12:34
+@@ -9,13 +9,13 @@
  	"time"
  
  	"github.com/blang/semver"
@@ -402,3 +374,10 @@ diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Na
  	"github.com/rhysd/go-github-selfupdate/selfupdate"
  )
  
+ var (
+ 	CurrentVersion string = "0.0.1"
+-	Repo           string = "komari-monitor/komari-agent"
++	Repo           string = "hanxianzhai/komari-agent"
+ )
+ 
+ // parseVersion 解析可能带有 v/V 前缀，以及预发布或构建元数据的版本字符串
