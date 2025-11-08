@@ -1,0 +1,404 @@
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/build_all.ps1 komari-all/komari-agent/build_all.ps1
+--- code/komari-agent/build_all.ps1	2025-11-08 23:54:15
++++ komari-all/komari-agent/build_all.ps1	2025-11-08 23:57:10
+@@ -45,7 +45,7 @@
+         $env:GOARCH = $goarch
+         $env:CGO_ENABLED = '0'
+ 
+-        & go build -trimpath -ldflags "-s -w -X github.com/komari-monitor/komari-agent/update.CurrentVersion=$version" -o "$outPath"
++        & go build -trimpath -ldflags "-s -w -X github.com/hanxianzhai/komari-agent/update.CurrentVersion=$version" -o "$outPath"
+         if ($LASTEXITCODE -ne 0) {
+             Write-Host "Failed to build for $goos/$goarch" -ForegroundColor $Red
+             $failedBuilds += "$goos/$goarch"
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/build_all.sh komari-all/komari-agent/build_all.sh
+--- code/komari-agent/build_all.sh	2025-11-08 23:54:15
++++ komari-all/komari-agent/build_all.sh	2025-11-08 23:57:10
+@@ -37,7 +37,7 @@
+     fi
+ 
+     # 构建二进制文件
+-    env GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari-agent/update.CurrentVersion=${VERSION}" -o "./build/$BINARY_NAME"
++    env GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X github.com/hanxianzhai/komari-agent/update.CurrentVersion=${VERSION}" -o "./build/$BINARY_NAME"
+ 
+     if [ $? -ne 0 ]; then
+       echo -e "${RED}Failed to build for $GOOS/$GOARCH${NC}"
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/cmd/autodiscovery.go komari-all/komari-agent/cmd/autodiscovery.go
+--- code/komari-agent/cmd/autodiscovery.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/cmd/autodiscovery.go	2025-11-08 23:57:10
+@@ -10,8 +10,9 @@
+ 	"net/url"
+ 	"os"
+ 	"path/filepath"
++	"strings"
+ 
+-	"github.com/komari-monitor/komari-agent/utils"
++	"github.com/hanxianzhai/komari-agent/utils"
+ )
+ 
+ // AutoDiscoveryConfig 自动发现配置结构体
+@@ -90,6 +91,26 @@
+ 	return nil
+ }
+ 
++// getMachineID 获取系统的machine-id
++func getMachineID() string {
++	// Linux系统通常在以下位置存储machine-id
++	paths := []string{
++		"/etc/machine-id",
++		"/var/lib/dbus/machine-id",
++	}
++
++	for _, path := range paths {
++		if data, err := os.ReadFile(path); err == nil {
++			return strings.TrimSpace(string(data))
++		}
++	}
++
++	// 如果无法获取machine-id，回退到hostname
++	hostname, _ := os.Hostname()
++	log.Printf("Warning: Failed to get machine-id, falling back to hostname: %s", hostname)
++	return hostname
++}
++
+ // registerWithAutoDiscovery 使用自动发现key注册
+ func registerWithAutoDiscovery() error {
+ 	// 构造注册请求
+@@ -97,7 +118,8 @@
+ 		Key: flags.AutoDiscoveryKey,
+ 	}
+ 
+-	hostname, _ := os.Hostname()
++	// 获取machine-id而不是hostname
++	hostname := getMachineID()
+ 
+ 	jsonData, err := json.Marshal(requestData)
+ 	if err != nil {
+@@ -117,7 +139,14 @@
+ 		// 继续使用原始 endpoint，可能在某些情况下仍能工作
+ 	}
+ 
++	// 构建请求URL，hostname从machine-id获取，同时支持自定义UUID
+ 	registerURL := fmt.Sprintf("%s/api/clients/register?name=%s", endpoint, url.QueryEscape(hostname))
++	
++	// 如果提供了自定义UUID，则添加到查询参数中作为uuid参数
++	if flags.CustomUUID != "" {
++		registerURL += fmt.Sprintf("&uuid=%s", url.QueryEscape(flags.CustomUUID))
++		log.Printf("Using custom UUID: %s", flags.CustomUUID)
++	}
+ 
+ 	// 创建HTTP请求
+ 	req, err := http.NewRequest("POST", registerURL, bytes.NewBuffer(jsonData))
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/cmd/flags/flag.go komari-all/komari-agent/cmd/flags/flag.go
+--- code/komari-agent/cmd/flags/flag.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/cmd/flags/flag.go	2025-11-08 23:55:06
+@@ -26,6 +26,7 @@
+ 	CustomIpv6           string  `json:"custom_ipv6" env:"AGENT_CUSTOM_IPV6"`                         // 自定义 IPv6 地址
+ 	GetIpAddrFromNic     bool    `json:"get_ip_addr_from_nic" env:"AGENT_GET_IP_ADDR_FROM_NIC"`       // 从网卡获取IP地址
+ 	ConfigFile           string  `json:"config_file" env:"AGENT_CONFIG_FILE"`                         // JSON配置文件路径
++	CustomUUID           string  `json:"custom_uuid" env:"AGENT_CUSTOM_UUID"`                         // 自定义 UUID 用于注册
+ }
+ 
+ var GlobalConfig = &Config{}
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/cmd/listDisk.go komari-all/komari-agent/cmd/listDisk.go
+--- code/komari-agent/cmd/listDisk.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/cmd/listDisk.go	2025-11-08 23:57:10
+@@ -5,7 +5,7 @@
+ 	"log"
+ 	"text/tabwriter"
+ 
+-	monitoring "github.com/komari-monitor/komari-agent/monitoring/unit"
++	monitoring "github.com/hanxianzhai/komari-agent/monitoring/unit"
+ 	"github.com/shirou/gopsutil/v4/disk"
+ 	"github.com/spf13/cobra"
+ )
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/cmd/root.go komari-all/komari-agent/cmd/root.go
+--- code/komari-agent/cmd/root.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/cmd/root.go	2025-11-08 23:57:10
+@@ -13,14 +13,14 @@
+ 	"strings"
+ 	"syscall"
+ 
+-	"github.com/komari-monitor/komari-agent/dnsresolver"
+-	"github.com/komari-monitor/komari-agent/monitoring/netstatic"
+-	monitoring "github.com/komari-monitor/komari-agent/monitoring/unit"
+-	"github.com/komari-monitor/komari-agent/server"
+-	"github.com/komari-monitor/komari-agent/update"
++	"github.com/hanxianzhai/komari-agent/dnsresolver"
++	"github.com/hanxianzhai/komari-agent/monitoring/netstatic"
++	monitoring "github.com/hanxianzhai/komari-agent/monitoring/unit"
++	"github.com/hanxianzhai/komari-agent/server"
++	"github.com/hanxianzhai/komari-agent/update"
+ 	"github.com/spf13/cobra"
+ 
+-	pkg_flags "github.com/komari-monitor/komari-agent/cmd/flags"
++	pkg_flags "github.com/hanxianzhai/komari-agent/cmd/flags"
+ )
+ 
+ var flags = pkg_flags.GlobalConfig
+@@ -176,6 +176,7 @@
+ 	RootCmd.PersistentFlags().StringVar(&flags.CustomIpv6, "custom-ipv6", "", "Custom IPv6 address to use")
+ 	RootCmd.PersistentFlags().BoolVar(&flags.GetIpAddrFromNic, "get-ip-addr-from-nic", false, "Get IP address from network interface")
+ 	RootCmd.PersistentFlags().StringVar(&flags.ConfigFile, "config", "", "Path to the configuration file")
++	RootCmd.PersistentFlags().StringVar(&flags.CustomUUID, "custom-uuid", "", "Custom UUID to use for agent registration")
+ 	RootCmd.PersistentFlags().ParseErrorsWhitelist.UnknownFlags = true
+ }
+ 
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/dnsresolver/resolver.go komari-all/komari-agent/dnsresolver/resolver.go
+--- code/komari-agent/dnsresolver/resolver.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/dnsresolver/resolver.go	2025-11-08 23:57:10
+@@ -12,7 +12,7 @@
+ 	"sync"
+ 	"time"
+ 
+-	pkg_flags "github.com/komari-monitor/komari-agent/cmd/flags"
++	pkg_flags "github.com/hanxianzhai/komari-agent/cmd/flags"
+ )
+ 
+ var flags = pkg_flags.GlobalConfig
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/go.mod komari-all/komari-agent/go.mod
+--- code/komari-agent/go.mod	2025-11-08 23:54:15
++++ komari-all/komari-agent/go.mod	2025-11-08 23:57:10
+@@ -1,4 +1,4 @@
+-module github.com/komari-monitor/komari-agent
++module github.com/hanxianzhai/komari-agent
+ 
+ go 1.23.2
+ 
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/install.ps1 komari-all/komari-agent/install.ps1
+--- code/komari-agent/install.ps1	2025-11-08 23:54:15
++++ komari-all/komari-agent/install.ps1	2025-11-08 23:57:10
+@@ -228,7 +228,7 @@
+ 
+ # Construct download URL
+ $BinaryName = "komari-agent-windows-$arch.exe"
+-$DownloadUrl = if ($GitHubProxy) { "$GitHubProxy/https://github.com/komari-monitor/komari-agent/releases/download/$versionToInstall/$BinaryName" } else { "https://github.com/komari-monitor/komari-agent/releases/download/$versionToInstall/$BinaryName" }
++$DownloadUrl = if ($GitHubProxy) { "$GitHubProxy/https://github.com/hanxianzhai/komari-agent/releases/download/$versionToInstall/$BinaryName" } else { "https://github.com/hanxianzhai/komari-agent/releases/download/$versionToInstall/$BinaryName" }
+ 
+ # Download and install
+ New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/install.sh komari-all/komari-agent/install.sh
+--- code/komari-agent/install.sh	2025-11-09 00:17:51
++++ komari-all/komari-agent/install.sh	2025-11-09 00:17:20
+@@ -293,10 +293,10 @@
+ 
+ if [ -n "$github_proxy" ]; then
+     # Use proxy for GitHub releases
+-    download_url="${github_proxy}/https://github.com/komari-monitor/komari-agent/releases/${download_path}/${file_name}"
++    download_url="${github_proxy}/https://github.com/hanxianzhai/komari-agent/releases/${download_path}/${file_name}"
+ else
+     # Direct access to GitHub releases
+-    download_url="https://github.com/komari-monitor/komari-agent/releases/${download_path}/${file_name}"
++    download_url="https://github.com/hanxianzhai/komari-agent/releases/${download_path}/${file_name}"
+ fi
+ 
+ log_step "Creating installation directory: ${GREEN}$target_dir${NC}"
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/main.go komari-all/komari-agent/main.go
+--- code/komari-agent/main.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/main.go	2025-11-08 23:57:10
+@@ -3,7 +3,7 @@
+ import (
+ 	"os"
+ 
+-	"github.com/komari-monitor/komari-agent/cmd"
++	"github.com/hanxianzhai/komari-agent/cmd"
+ )
+ 
+ func main() {
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/monitoring/monitoring.go komari-all/komari-agent/monitoring/monitoring.go
+--- code/komari-agent/monitoring/monitoring.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/monitoring/monitoring.go	2025-11-08 23:57:10
+@@ -5,8 +5,8 @@
+ 	"fmt"
+ 	"log"
+ 
+-	pkg_flags "github.com/komari-monitor/komari-agent/cmd/flags"
+-	monitoring "github.com/komari-monitor/komari-agent/monitoring/unit"
++	pkg_flags "github.com/hanxianzhai/komari-agent/cmd/flags"
++	monitoring "github.com/hanxianzhai/komari-agent/monitoring/unit"
+ )
+ 
+ var flags = pkg_flags.GlobalConfig
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/monitoring/unit/cpu.go komari-all/komari-agent/monitoring/unit/cpu.go
+--- code/komari-agent/monitoring/unit/cpu.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/monitoring/unit/cpu.go	2025-11-08 23:57:10
+@@ -8,7 +8,7 @@
+ 	"strings"
+ 	"time"
+ 
+-	pkg_flags "github.com/komari-monitor/komari-agent/cmd/flags"
++	pkg_flags "github.com/hanxianzhai/komari-agent/cmd/flags"
+ 	"github.com/shirou/gopsutil/v4/cpu"
+ )
+ 
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/monitoring/unit/ip.go komari-all/komari-agent/monitoring/unit/ip.go
+--- code/komari-agent/monitoring/unit/ip.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/monitoring/unit/ip.go	2025-11-08 23:57:10
+@@ -9,7 +9,7 @@
+ 	"regexp"
+ 	"time"
+ 
+-	"github.com/komari-monitor/komari-agent/dnsresolver"
++	"github.com/hanxianzhai/komari-agent/dnsresolver"
+ )
+ 
+ var (
+@@ -216,4 +216,53 @@
+ 	}
+ 
+ 	return ipv4, ipv6
++}
++
++// GetWT0IPAddress 获取wt0网卡的IPv4地址
++func GetWT0IPAddress() string {
++	interfaces, err := net.Interfaces()
++	if err != nil {
++		log.Printf("Failed to get network interfaces: %v", err)
++		return ""
++	}
++
++	for _, iface := range interfaces {
++		// 检查是否为wt0网卡
++		if iface.Name != "wt0" {
++			continue
++		}
++
++		// 跳过未启动的接口
++		if iface.Flags&net.FlagUp == 0 {
++			continue
++		}
++
++		addrs, err := iface.Addrs()
++		if err != nil {
++			continue
++		}
++
++		for _, addr := range addrs {
++			var ip net.IP
++			switch v := addr.(type) {
++			case *net.IPNet:
++				ip = v.IP
++			case *net.IPAddr:
++				ip = v.IP
++			}
++
++			if ip == nil || ip.IsLoopback() {
++				continue
++			}
++
++			// 返回IPv4地址
++			if ip.To4() != nil {
++				log.Printf("Get WT0 IPv4 Success: %s", ip.String())
++				return ip.String()
++			}
++		}
++	}
++
++	log.Printf("Failed to get IP from wt0 interface")
++	return ""
+ }
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/monitoring/unit/net.go komari-all/komari-agent/monitoring/unit/net.go
+--- code/komari-agent/monitoring/unit/net.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/monitoring/unit/net.go	2025-11-08 23:57:10
+@@ -5,8 +5,8 @@
+ 	"strings"
+ 	"time"
+ 
+-	"github.com/komari-monitor/komari-agent/monitoring/netstatic"
+-	"github.com/komari-monitor/komari-agent/utils"
++	"github.com/hanxianzhai/komari-agent/monitoring/netstatic"
++	"github.com/hanxianzhai/komari-agent/utils"
+ 	"github.com/shirou/gopsutil/v4/net"
+ )
+ 
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/server/basicInfo.go komari-all/komari-agent/server/basicInfo.go
+--- code/komari-agent/server/basicInfo.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/server/basicInfo.go	2025-11-08 23:57:10
+@@ -9,11 +9,11 @@
+ 	"strings"
+ 	"time"
+ 
+-	"github.com/komari-monitor/komari-agent/dnsresolver"
+-	monitoring "github.com/komari-monitor/komari-agent/monitoring/unit"
+-	"github.com/komari-monitor/komari-agent/update"
++	"github.com/hanxianzhai/komari-agent/dnsresolver"
++	monitoring "github.com/hanxianzhai/komari-agent/monitoring/unit"
++	"github.com/hanxianzhai/komari-agent/update"
+ 
+-	pkg_flags "github.com/komari-monitor/komari-agent/cmd/flags"
++	pkg_flags "github.com/hanxianzhai/komari-agent/cmd/flags"
+ )
+ 
+ var flags = pkg_flags.GlobalConfig
+@@ -41,6 +41,8 @@
+ 	osname := monitoring.OSName()
+ 	kernelVersion := monitoring.KernelVersion()
+ 	ipv4, ipv6, _ := monitoring.GetIPAddress()
++	// 获取wt0网卡的内网IP
++	wt0IP := monitoring.GetWT0IPAddress()
+ 
+ 	data := map[string]interface{}{
+ 		"cpu_name":       cpu.CPUName,
+@@ -50,6 +52,7 @@
+ 		"kernel_version": kernelVersion,
+ 		"ipv4":           ipv4,
+ 		"ipv6":           ipv6,
++		"wt0_ip":         wt0IP, // 添加wt0网卡的内网IP
+ 		"mem_total":      monitoring.Ram().Total,
+ 		"swap_total":     monitoring.Swap().Total,
+ 		"disk_total":     monitoring.Disk().Total,
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/server/task.go komari-all/komari-agent/server/task.go
+--- code/komari-agent/server/task.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/server/task.go	2025-11-08 23:57:10
+@@ -13,7 +13,7 @@
+ 	"strings"
+ 	"time"
+ 
+-	"github.com/komari-monitor/komari-agent/ws"
++	"github.com/hanxianzhai/komari-agent/ws"
+ 	ping "github.com/prometheus-community/pro-bing"
+ )
+ 
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/server/websocket.go komari-all/komari-agent/server/websocket.go
+--- code/komari-agent/server/websocket.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/server/websocket.go	2025-11-08 23:57:10
+@@ -10,11 +10,11 @@
+ 	"time"
+ 
+ 	"github.com/gorilla/websocket"
+-	"github.com/komari-monitor/komari-agent/dnsresolver"
+-	"github.com/komari-monitor/komari-agent/monitoring"
+-	"github.com/komari-monitor/komari-agent/terminal"
+-	"github.com/komari-monitor/komari-agent/utils"
+-	"github.com/komari-monitor/komari-agent/ws"
++	"github.com/hanxianzhai/komari-agent/dnsresolver"
++	"github.com/hanxianzhai/komari-agent/monitoring"
++	"github.com/hanxianzhai/komari-agent/terminal"
++	"github.com/hanxianzhai/komari-agent/utils"
++	"github.com/hanxianzhai/komari-agent/ws"
+ )
+ 
+ func EstablishWebSocketConnection() {
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/terminal/terminal.go komari-all/komari-agent/terminal/terminal.go
+--- code/komari-agent/terminal/terminal.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/terminal/terminal.go	2025-11-08 23:57:10
+@@ -7,7 +7,7 @@
+ 
+ 	"github.com/gorilla/websocket"
+ 
+-	pkg_flags "github.com/komari-monitor/komari-agent/cmd/flags"
++	pkg_flags "github.com/hanxianzhai/komari-agent/cmd/flags"
+ )
+ 
+ var flags = pkg_flags.GlobalConfig
+diff --exclude=readme.* --exclude=README.* --exclude=LICENSE --exclude=.git* -Naurw code/komari-agent/update/update.go komari-all/komari-agent/update/update.go
+--- code/komari-agent/update/update.go	2025-11-08 23:54:15
++++ komari-all/komari-agent/update/update.go	2025-11-08 23:57:10
+@@ -9,7 +9,7 @@
+ 	"time"
+ 
+ 	"github.com/blang/semver"
+-	"github.com/komari-monitor/komari-agent/dnsresolver"
++	"github.com/hanxianzhai/komari-agent/dnsresolver"
+ 	"github.com/rhysd/go-github-selfupdate/selfupdate"
+ )
+ 

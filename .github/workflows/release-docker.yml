@@ -24,6 +24,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Apply patch
+        run: |
+          patch -p2 < komari-agent.patch    
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:

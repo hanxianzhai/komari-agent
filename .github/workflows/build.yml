@@ -29,6 +29,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
+      
+      - name: Apply patch
+        run: |
+          patch -p2 < komari-agent.patch    
 
       - name: Build binary
         env:
